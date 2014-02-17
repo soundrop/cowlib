@@ -217,17 +217,16 @@ parse_body(Stream, Boundary) ->
 				%% Return more or less of the body depending on the result.
 				nomatch ->
 					From = byte_size(Stream) - BoundarySize - 3,
-					case binary:match(Stream, <<"\r">>) of
+					case binary:match(Stream, <<"\r">>, [{scope, {From, byte_size(Stream) - From}}]) of
 						nomatch ->
 							{ok, Stream};
 						{Pos, _} ->
-							Pos2 = From + Pos,
 							case Stream of
-								<< Body:Pos2/binary, "\r\n" >> ->
+								<< Body:Pos/binary, "\r\n" >> ->
 									{ok, Body};
-								<< Body:Pos2/binary, "\r\n", Rest/bits >> ->
+								<< Body:Pos/binary, "\r\n", Rest/bits >> ->
 									{ok, Body, Rest};
-								<< Body:Pos2/binary, Rest/bits >> ->
+								<< Body:Pos/binary, Rest/bits >> ->
 									{ok, Body, Rest}
 							end
 					end;
