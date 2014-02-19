@@ -215,7 +215,7 @@ parse_body(Stream, Boundary) ->
 			case binary:match(Stream, << "\r\n--", Boundary/bits >>) of
 				%% No boundary, check for a possible partial at the end.
 				%% Return more or less of the body depending on the result.
-				nomatch ->
+				nomatch when byte_size(Stream) - BoundarySize - 3 > 0 ->
 					From = byte_size(Stream) - BoundarySize - 3,
 					case binary:match(Stream, <<"\r">>, [{scope, {From, byte_size(Stream) - From}}]) of
 						nomatch ->
@@ -230,6 +230,8 @@ parse_body(Stream, Boundary) ->
 									{ok, Body, Rest}
 							end
 					end;
+				nomatch ->
+					{ok, Stream};
 				%% Boundary found, this is the last chunk of the body.
 				{Pos, _} ->
 					case Stream of
